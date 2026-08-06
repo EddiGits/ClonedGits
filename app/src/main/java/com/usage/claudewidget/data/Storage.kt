@@ -89,6 +89,7 @@ class Storage private constructor(
                     .put("key", it.key)
                     .put("util", it.window.utilization.toDouble())
                     .put("reset", it.window.resetsAtEpochMs)
+                    .putOpt("label", it.labelOverride)
             )
         }
     }.toString()
@@ -105,6 +106,7 @@ class Storage private constructor(
                         utilization = o.getDouble("util").toFloat(),
                         resetsAtEpochMs = o.getLong("reset"),
                     ),
+                    labelOverride = if (o.isNull("label")) null else o.optString("label"),
                 )
             }
         } catch (_: Exception) {

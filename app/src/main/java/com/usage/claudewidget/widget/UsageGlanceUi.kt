@@ -108,7 +108,10 @@ private fun FullLayout(s: WidgetState) {
         MeterRow("1W", s.sevenDayPct, s.sevenDayResets)
         s.extras.forEach { e ->
             Spacer(GlanceModifier.height(10.dp))
-            MeterRow(e.label, e.pct, e.resets, labelWidth = 52.dp)
+            // Extra bars deep-link to the Claude app's Usage screen.
+            Box(modifier = GlanceModifier.clickable(actionRunCallback<OpenClaudeUsageAction>())) {
+                MeterRow(e.label, e.pct, e.resets, labelWidth = null)
+            }
         }
     }
 }
@@ -118,7 +121,7 @@ private fun MeterRow(
     label: String,
     pct: Int,
     resets: String,
-    labelWidth: androidx.compose.ui.unit.Dp = 28.dp,
+    labelWidth: androidx.compose.ui.unit.Dp? = 28.dp,
 ) {
     Column(modifier = GlanceModifier.fillMaxWidth()) {
         Row(
@@ -128,8 +131,9 @@ private fun MeterRow(
             Text(
                 label,
                 style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontWeight = FontWeight.Bold),
-                modifier = GlanceModifier.width(labelWidth),
+                modifier = if (labelWidth != null) GlanceModifier.width(labelWidth) else GlanceModifier,
             )
+            if (labelWidth == null) Spacer(GlanceModifier.width(8.dp))
             Text(
                 "$pct%",
                 style = TextStyle(color = GlanceTheme.colors.onSurface, fontWeight = FontWeight.Bold),

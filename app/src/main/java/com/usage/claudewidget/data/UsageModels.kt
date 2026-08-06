@@ -15,9 +15,11 @@ data class Window(
 data class LabeledWindow(
     val key: String,
     val window: Window,
+    /** Explicit display name (e.g. "Fable only" from a limits entry's scope). */
+    val labelOverride: String? = null,
 ) {
     /** "seven_day_fable" → "Fable"; falls back to title-casing the whole key. */
-    val label: String get() = labelFor(key)
+    val label: String get() = labelOverride ?: labelFor(key)
 
     companion object {
         private val DURATION_WORDS = setOf(
@@ -69,12 +71,16 @@ data class UsageSnapshot(
                         return@mapNotNull null
                     }
                     if (o.isNull("percent") || o.isNull("resets_at")) return@mapNotNull null
+                    // A model-scoped limit carries the model in "scope"
+                    // (e.g. kind "weekly_scoped" + scope "fable" → "Fable only").
+                    val scope = if (o.isNull("scope")) null else o.optString("scope").ifBlank { null }
                     LabeledWindow(
-                        kind,
-                        Window(
+                        key = scope ?: kind,
+                        window = Window(
                             o.optDouble("percent", 0.0).toFloat(),
                             Iso8601.toEpochMs(o.optString("resets_at", "")),
                         ),
+                        labelOverride = scope?.let { "${LabeledWindow.labelFor(it)} only" },
                     )
                 }
             }.orEmpty()
