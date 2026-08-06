@@ -111,6 +111,30 @@ private fun SetupScreen() {
             Text("Disable battery optimization")
         }
 
+        // Deep-link experiments: find the intent that opens the Code session list.
+        OutlinedButton(onClick = { debug = dumpClaudeActivities(context) }) {
+            Text("Dump Claude app activities")
+        }
+        listOf(
+            "claude://code",
+            "claude://recents",
+            "https://claude.ai/recents",
+            "https://claude.ai/code/recents",
+        ).forEach { uri ->
+            OutlinedButton(onClick = {
+                debug = try {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+                            .setPackage("com.anthropic.claude")
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                    "launched $uri"
+                } catch (e: Exception) {
+                    "failed $uri: ${e.javaClass.simpleName}"
+                }
+            }) { Text("Try $uri") }
+        }
+
         if (debug.isNotBlank()) {
             SelectionContainer {
                 Text(debug, style = MaterialTheme.typography.bodySmall)
@@ -126,6 +150,23 @@ private fun describe(s: Storage): String = buildString {
         append("\nlast: 5H ").append(s.fiveHourUtil.toInt()).append("%  1W ")
             .append(s.sevenDayUtil.toInt()).append("%")
     }
+}
+
+private fun dumpClaudeActivities(context: Context): String = try {
+    @Suppress("DEPRECATION")
+    val info = context.packageManager.getPackageInfo(
+        "com.anthropic.claude",
+        android.content.pm.PackageManager.GET_ACTIVITIES,
+    )
+    buildString {
+        append("Claude app activities (E = exported):")
+        info.activities.orEmpty().forEach { a ->
+            append("\n").append(if (a.exported) "E " else "- ")
+                .append(a.name.removePrefix("com.anthropic.claude"))
+        }
+    }
+} catch (e: Exception) {
+    "activity dump failed: $e"
 }
 
 private fun requestBatteryExemption(context: Context) {
