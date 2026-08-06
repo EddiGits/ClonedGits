@@ -72,8 +72,8 @@ data class UsageSnapshot(
                     }
                     if (o.isNull("percent") || o.isNull("resets_at")) return@mapNotNull null
                     // A model-scoped limit carries the model in "scope"
-                    // (e.g. kind "weekly_scoped" + scope "fable" → "Fable only").
-                    val scope = if (o.isNull("scope")) null else o.optString("scope").ifBlank { null }
+                    // (e.g. scope {"model":{"displayName":"Fable"}} → "Fable only").
+                    val scope = scopeName(o)
                     LabeledWindow(
                         key = scope ?: kind,
                         window = Window(
@@ -93,6 +93,24 @@ data class UsageSnapshot(
                 topLevelKeys = keys,
                 rawBody = body,
             )
+        }
+
+        /** "scope" is a plain string or {"model":{"id","displayName"},"surface":...}. */
+        private fun scopeName(o: JSONObject): String? {
+            if (o.isNull("scope")) return null
+            val sc = o.optJSONObject("scope")
+                ?: return o.optString("scope").ifBlank { null }
+            sc.optJSONObject("model")?.let { m ->
+                for (field in listOf("displayName", "id")) {
+                    if (!m.isNull(field)) {
+                        m.optString(field).ifBlank { null }?.let { return it }
+                    }
+                }
+            }
+            if (!sc.isNull("surface")) {
+                sc.optString("surface").ifBlank { null }?.let { return it }
+            }
+            return null
         }
 
         private fun JSONObject.toWindow(): Window {
