@@ -39,6 +39,8 @@ data class UsageSnapshot(
     val fetchedAtEpochMs: Long,
     /** All top-level keys of the response, for the debug screen. Not persisted. */
     val topLevelKeys: List<String> = emptyList(),
+    /** Raw response body, for the debug screen. Not persisted. */
+    val rawBody: String = "",
 ) {
     companion object {
         fun parse(body: String, now: Long): UsageSnapshot {
@@ -60,6 +62,7 @@ data class UsageSnapshot(
                 extras = extras,
                 fetchedAtEpochMs = now,
                 topLevelKeys = keys,
+                rawBody = body,
             )
         }
 

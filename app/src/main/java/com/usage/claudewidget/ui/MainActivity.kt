@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -63,7 +66,9 @@ private fun SetupScreen() {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("Claude Usage Widget", style = MaterialTheme.typography.headlineSmall)
@@ -86,6 +91,13 @@ private fun SetupScreen() {
                                 append("\n${it.label}: ${it.window.utilization}%")
                             }
                             append("\nkeys: ${r.snapshot.topLevelKeys.joinToString(", ")}")
+                            // Raw value per key, so unexpected window shapes are visible.
+                            runCatching {
+                                val root = org.json.JSONObject(r.snapshot.rawBody)
+                                r.snapshot.topLevelKeys.forEach { k ->
+                                    append("\n$k = ${root.opt(k).toString().take(300)}")
+                                }
+                            }
                         }
                     }
                     is FetchResult.NeedsLogin -> "Session expired. Sign in again."
@@ -100,7 +112,9 @@ private fun SetupScreen() {
         }
 
         if (debug.isNotBlank()) {
-            Text(debug, style = MaterialTheme.typography.titleMedium)
+            SelectionContainer {
+                Text(debug, style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
