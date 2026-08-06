@@ -41,6 +41,13 @@ class UsageWidget : GlanceAppWidget() {
             fiveHourResets = TimeFmt.resetsIn(s.fiveHourReset, now),
             sevenDayPct = s.sevenDayUtil.coerceAtLeast(0f).roundToInt(),
             sevenDayResets = TimeFmt.resetsIn(s.sevenDayReset, now),
+            extras = s.extras.map {
+                ExtraMeter(
+                    label = it.label,
+                    pct = it.window.utilization.coerceAtLeast(0f).roundToInt(),
+                    resets = TimeFmt.resetsIn(it.window.resetsAtEpochMs, now),
+                )
+            },
             stale = TimeFmt.isStale(s.fetchedAt, now),
         )
     }

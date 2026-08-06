@@ -79,8 +79,14 @@ private fun SetupScreen() {
                 debug = when (val r = UsageRepository(context).refresh()) {
                     is FetchResult.Success -> {
                         UsageWidget.updateAll(context)
-                        "5H: ${r.snapshot.fiveHour.utilization}%   " +
-                            "1W: ${r.snapshot.sevenDay.utilization}%"
+                        buildString {
+                            append("5H: ${r.snapshot.fiveHour.utilization}%   ")
+                            append("1W: ${r.snapshot.sevenDay.utilization}%")
+                            r.snapshot.extras.forEach {
+                                append("\n${it.label}: ${it.window.utilization}%")
+                            }
+                            append("\nkeys: ${r.snapshot.topLevelKeys.joinToString(", ")}")
+                        }
                     }
                     is FetchResult.NeedsLogin -> "Session expired. Sign in again."
                     is FetchResult.Soft -> "Transient: ${r.reason}"

@@ -41,7 +41,15 @@ data class WidgetState(
     val fiveHourResets: String,
     val sevenDayPct: Int,
     val sevenDayResets: String,
+    val extras: List<ExtraMeter>,
     val stale: Boolean,
+)
+
+/** Extra usage window (e.g. a model-specific weekly limit) shown in the Full layout. */
+data class ExtraMeter(
+    val label: String,
+    val pct: Int,
+    val resets: String,
 )
 
 private val COMPACT_MAX_WIDTH = 130.dp
@@ -98,11 +106,20 @@ private fun FullLayout(s: WidgetState) {
         MeterRow("5H", s.fiveHourPct, s.fiveHourResets)
         Spacer(GlanceModifier.height(10.dp))
         MeterRow("1W", s.sevenDayPct, s.sevenDayResets)
+        s.extras.forEach { e ->
+            Spacer(GlanceModifier.height(10.dp))
+            MeterRow(e.label, e.pct, e.resets, labelWidth = 52.dp)
+        }
     }
 }
 
 @Composable
-private fun MeterRow(label: String, pct: Int, resets: String) {
+private fun MeterRow(
+    label: String,
+    pct: Int,
+    resets: String,
+    labelWidth: androidx.compose.ui.unit.Dp = 28.dp,
+) {
     Column(modifier = GlanceModifier.fillMaxWidth()) {
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
@@ -111,7 +128,7 @@ private fun MeterRow(label: String, pct: Int, resets: String) {
             Text(
                 label,
                 style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontWeight = FontWeight.Bold),
-                modifier = GlanceModifier.width(28.dp),
+                modifier = GlanceModifier.width(labelWidth),
             )
             Text(
                 "$pct%",

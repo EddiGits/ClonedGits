@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Two-tier storage:
@@ -58,6 +60,10 @@ class Storage private constructor(
         get() = snapshot.getLong("fetched_at", 0L)
         set(v) = snapshot.edit().putLong("fetched_at", v).apply()
 
+    /** Extra windows (e.g. a model-specific weekly limit), JSON-serialized. */
+    val extras: List<LabeledWindow>
+        get() = decodeExtras(snapshot.getString("extras", null))
+
     /** AuthState ordinal; widget shows "Tap to sign in" when NEEDS_LOGIN. */
     var authState: AuthState
         get() = AuthState.entries.getOrElse(snapshot.getInt("auth_state", 0)) { AuthState.OK }
@@ -72,7 +78,38 @@ class Storage private constructor(
             .putFloat("wk_util", s.sevenDay.utilization)
             .putLong("wk_reset", s.sevenDay.resetsAtEpochMs)
             .putLong("fetched_at", s.fetchedAtEpochMs)
+            .putString("extras", encodeExtras(s.extras))
             .apply()
+    }
+
+    private fun encodeExtras(list: List<LabeledWindow>): String = JSONArray().apply {
+        list.forEach {
+            put(
+                JSONObject()
+                    .put("key", it.key)
+                    .put("util", it.window.utilization.toDouble())
+                    .put("reset", it.window.resetsAtEpochMs)
+            )
+        }
+    }.toString()
+
+    private fun decodeExtras(raw: String?): List<LabeledWindow> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return try {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                LabeledWindow(
+                    key = o.getString("key"),
+                    window = Window(
+                        utilization = o.getDouble("util").toFloat(),
+                        resetsAtEpochMs = o.getLong("reset"),
+                    ),
+                )
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
     companion object {
