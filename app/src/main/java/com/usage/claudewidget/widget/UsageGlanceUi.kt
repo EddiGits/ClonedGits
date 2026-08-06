@@ -2,6 +2,7 @@ package com.usage.claudewidget.widget
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
@@ -55,13 +56,23 @@ data class ExtraMeter(
 
 private val COMPACT_MAX_WIDTH = 130.dp
 
-/** Shortcut chips at the bottom of the Full layout. url == null launches the Claude app. */
-private data class Shortcut(val label: String, val url: String?)
+/**
+ * Shortcut chips at the bottom of the Full layout.
+ * url == null launches the Claude app; refresh == true refetches usage.
+ */
+private data class Shortcut(
+    val iconRes: Int,
+    val contentDescription: String,
+    val url: String? = null,
+    val refresh: Boolean = false,
+    val tint: Boolean = true,
+)
 
 private val SHORTCUTS = listOf(
-    Shortcut("Claude", null),
-    Shortcut("Code", "https://claude.ai/code"),
-    Shortcut("Usage", "https://claude.ai/settings/usage"),
+    Shortcut(R.drawable.ic_lobster, "Claude", tint = false),
+    Shortcut(R.drawable.ic_code, "Claude Code", url = "https://claude.ai/code"),
+    Shortcut(R.drawable.ic_usage, "Usage", url = "https://claude.ai/settings/usage"),
+    Shortcut(R.drawable.ic_refresh, "Refresh", refresh = true),
 )
 
 // Colors come from resources so they auto-adapt to light/dark via values-night.
@@ -135,7 +146,7 @@ private fun ShortcutRow() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SHORTCUTS.forEachIndexed { i, shortcut ->
-            if (i > 0) Spacer(GlanceModifier.width(8.dp))
+            if (i > 0) Spacer(GlanceModifier.defaultWeight())
             ShortcutChip(shortcut)
         }
     }
@@ -143,10 +154,10 @@ private fun ShortcutRow() {
 
 @Composable
 private fun ShortcutChip(shortcut: Shortcut) {
-    val action = if (shortcut.url == null) {
-        actionRunCallback<OpenClaudeAppAction>()
-    } else {
-        actionRunCallback<OpenLinkAction>(
+    val action = when {
+        shortcut.refresh -> actionRunCallback<RefreshAction>()
+        shortcut.url == null -> actionRunCallback<OpenClaudeAppAction>()
+        else -> actionRunCallback<OpenLinkAction>(
             actionParametersOf(OpenLinkAction.URL to shortcut.url)
         )
     }
@@ -154,12 +165,14 @@ private fun ShortcutChip(shortcut: Shortcut) {
         modifier = GlanceModifier
             .background(barTrack())
             .cornerRadius(14.dp)
-            .padding(horizontal = 12.dp, vertical = 7.dp)
+            .padding(horizontal = 14.dp, vertical = 7.dp)
             .clickable(action),
     ) {
-        Text(
-            shortcut.label,
-            style = TextStyle(color = GlanceTheme.colors.onSurface, fontWeight = FontWeight.Medium),
+        Image(
+            provider = ImageProvider(shortcut.iconRes),
+            contentDescription = shortcut.contentDescription,
+            modifier = GlanceModifier.size(18.dp),
+            colorFilter = if (shortcut.tint) ColorFilter.tint(GlanceTheme.colors.onSurface) else null,
         )
     }
 }
