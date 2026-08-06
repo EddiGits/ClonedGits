@@ -95,7 +95,7 @@ private fun SetupScreen() {
                             runCatching {
                                 val root = org.json.JSONObject(r.snapshot.rawBody)
                                 r.snapshot.topLevelKeys.forEach { k ->
-                                    append("\n$k = ${root.opt(k).toString().take(300)}")
+                                    append("\n$k = ${root.opt(k).toString().take(1500)}")
                                 }
                             }
                         }
