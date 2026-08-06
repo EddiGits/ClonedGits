@@ -44,3 +44,41 @@ class OpenClaudeUsageAction : ActionCallback {
         private const val CLAUDE_PACKAGE = "com.anthropic.claude"
     }
 }
+
+/** Shortcut chip: launch the Claude app (claude.ai in the browser as fallback). */
+class OpenClaudeAppAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters,
+    ) {
+        val intent = context.packageManager.getLaunchIntentForPackage("com.anthropic.claude")
+            ?: Intent(Intent.ACTION_VIEW, Uri.parse("https://claude.ai"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
+        } catch (_: Exception) {
+        }
+    }
+}
+
+/** Shortcut chip: open a URL with the system's default handler (app link or browser). */
+class OpenLinkAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters,
+    ) {
+        val url = parameters[URL] ?: return
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
+        } catch (_: Exception) {
+        }
+    }
+
+    companion object {
+        val URL = ActionParameters.Key<String>("url")
+    }
+}

@@ -7,6 +7,7 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
@@ -53,6 +54,15 @@ data class ExtraMeter(
 )
 
 private val COMPACT_MAX_WIDTH = 130.dp
+
+/** Shortcut chips at the bottom of the Full layout. url == null launches the Claude app. */
+private data class Shortcut(val label: String, val url: String?)
+
+private val SHORTCUTS = listOf(
+    Shortcut("Claude", null),
+    Shortcut("Code", "https://claude.ai/code"),
+    Shortcut("Cowork", "https://claude.ai/cowork"),
+)
 
 // Colors come from resources so they auto-adapt to light/dark via values-night.
 private val accent = ColorProvider(R.color.accent)
@@ -113,6 +123,44 @@ private fun FullLayout(s: WidgetState) {
                 MeterRow(e.label, e.pct, e.resets, labelWidth = null)
             }
         }
+        Spacer(GlanceModifier.defaultWeight())
+        ShortcutRow()
+    }
+}
+
+@Composable
+private fun ShortcutRow() {
+    Row(
+        modifier = GlanceModifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SHORTCUTS.forEachIndexed { i, shortcut ->
+            if (i > 0) Spacer(GlanceModifier.width(8.dp))
+            ShortcutChip(shortcut)
+        }
+    }
+}
+
+@Composable
+private fun ShortcutChip(shortcut: Shortcut) {
+    val action = if (shortcut.url == null) {
+        actionRunCallback<OpenClaudeAppAction>()
+    } else {
+        actionRunCallback<OpenLinkAction>(
+            actionParametersOf(OpenLinkAction.URL to shortcut.url)
+        )
+    }
+    Box(
+        modifier = GlanceModifier
+            .background(barTrack())
+            .cornerRadius(14.dp)
+            .padding(horizontal = 12.dp, vertical = 7.dp)
+            .clickable(action),
+    ) {
+        Text(
+            shortcut.label,
+            style = TextStyle(color = GlanceTheme.colors.onSurface, fontWeight = FontWeight.Medium),
+        )
     }
 }
 
