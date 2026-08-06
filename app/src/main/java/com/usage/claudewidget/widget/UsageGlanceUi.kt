@@ -61,7 +61,7 @@ private data class Shortcut(val label: String, val url: String?)
 private val SHORTCUTS = listOf(
     Shortcut("Claude", null),
     Shortcut("Code", "https://claude.ai/code"),
-    Shortcut("Cowork", "https://claude.ai/cowork"),
+    Shortcut("Usage", "https://claude.ai/settings/usage"),
 )
 
 // Colors come from resources so they auto-adapt to light/dark via values-night.

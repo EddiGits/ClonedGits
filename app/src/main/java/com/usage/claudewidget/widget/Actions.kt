@@ -28,15 +28,15 @@ class OpenClaudeUsageAction : ActionCallback {
     ) {
         val view = Intent(Intent.ACTION_VIEW, Uri.parse("https://claude.ai/settings/usage"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        val inApp = Intent(view).setPackage(CLAUDE_PACKAGE)
-        val intent = when {
-            inApp.resolveActivity(context.packageManager) != null -> inApp
-            else -> context.packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE) ?: view
-        }
         try {
-            context.startActivity(intent)
+            context.startActivity(Intent(view).setPackage(CLAUDE_PACKAGE))
         } catch (_: Exception) {
-            // No Claude app and no browser; nothing sensible to do.
+            val fallback = context.packageManager.getLaunchIntentForPackage(CLAUDE_PACKAGE) ?: view
+            try {
+                context.startActivity(fallback)
+            } catch (_: Exception) {
+                // No Claude app and no browser; nothing sensible to do.
+            }
         }
     }
 
@@ -62,7 +62,7 @@ class OpenClaudeAppAction : ActionCallback {
     }
 }
 
-/** Shortcut chip: open a URL with the system's default handler (app link or browser). */
+/** Shortcut chip: open a URL in the Claude app, falling back to the browser. */
 class OpenLinkAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
@@ -70,11 +70,17 @@ class OpenLinkAction : ActionCallback {
         parameters: ActionParameters,
     ) {
         val url = parameters[URL] ?: return
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val view = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
-            context.startActivity(intent)
+            // Explicit package routes into the Claude app even when it isn't
+            // the verified default handler for claude.ai links.
+            context.startActivity(Intent(view).setPackage("com.anthropic.claude"))
         } catch (_: Exception) {
+            try {
+                context.startActivity(view)
+            } catch (_: Exception) {
+            }
         }
     }
 
