@@ -70,7 +70,8 @@ private data class Shortcut(
 
 private val SHORTCUTS = listOf(
     Shortcut(R.drawable.ic_lobster, "Claude", tint = false),
-    Shortcut(R.drawable.ic_code, "Claude Code", url = "https://claude.ai/code"),
+    // claude://code opens the Code session list (claude.ai/code starts a new session).
+    Shortcut(R.drawable.ic_code, "Claude Code", url = "claude://code"),
     Shortcut(R.drawable.ic_usage, "Usage", url = "https://claude.ai/settings/usage"),
     Shortcut(R.drawable.ic_refresh, "Refresh", refresh = true),
 )
